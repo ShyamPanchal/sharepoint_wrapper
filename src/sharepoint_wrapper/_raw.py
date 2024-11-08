@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from functools import wraps
 from io import BytesIO
+import traceback
 
 import urllib3
 from urllib import parse
@@ -237,7 +238,7 @@ def write_file(
             # retries=False,  # Disable automatic retries
         )
 
-        if response.status != 201:
+        if response.status not in (201, 200):
             response_data = json.loads(response.data.decode("utf-8"))
             error_description = response_data["error"]["message"]
             raise Exception(error_description)
@@ -245,4 +246,5 @@ def write_file(
         return response.json()
 
     except Exception as e:
-        raise Exception(f"Invalid Site: {str(e)}")
+        print(traceback.format_exc())
+        raise Exception(f"Error uploading file: {str(e)}")

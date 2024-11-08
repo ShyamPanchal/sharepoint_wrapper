@@ -51,3 +51,23 @@ file_at_root: BytesIO = get_file_content(config, file_name)
 # ensure your path starts with a slash "/"
 file_at_path: BytesIO = get_file_content(config, file_name, "/my/path") 
 ```
+
+## Upload a file
+
+:warning: **Note**: Upload response will only be returned in case of success if upload fails, an exception will be raised
+
+```python
+from sharepoint_wrapper import upload_file
+from io import BytesIO
+
+with open('path/to/your/file', 'rb') as file:
+    file_content = file.read()
+
+# Note: Upload response will only be returned in case of success
+# if upload fails, an exception will be raised
+
+upload_response: dict = upload_file(config, file_content, "file_name.txt")
+# or 
+# ensure your path starts with a slash "/"
+upload_response: dict = upload_file(config, file_content, "file_name.txt", "/my/path") 
+```
