@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from io import BytesIO
 
 from sharepoint_wrapper._raw import (
     get_children,
@@ -6,6 +7,7 @@ from sharepoint_wrapper._raw import (
     get_file,
     get_graph_token,
     get_site,
+    write_file,
 )
 from datetime import datetime, timedelta
 
@@ -64,3 +66,12 @@ def get_files(config: SharePointConfig, path: str | None = None):
 
 def get_file_content(config: SharePointConfig, file_name: str, path: str | None = None):
     return get_file(config.drive, config.token, file_name, path)
+
+
+def upload_file(
+    config: SharePointConfig,
+    file_content: BytesIO,
+    file_name: str,
+    path: str | None = None,
+):
+    return write_file(config.drive, config.token, file_content, file_name, path)

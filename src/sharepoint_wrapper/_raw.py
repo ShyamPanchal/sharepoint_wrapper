@@ -177,8 +177,7 @@ def get_file(
     base_path: str | None = None,
 ) -> BytesIO:
     """
-    Get Children.
-    None : All | folder : Folders only | file : Files only
+    Get File.
     """
     if base_path is not None and not base_path.startswith("/"):
         raise Exception("Base path must always begin with a slash /")
@@ -206,6 +205,44 @@ def get_file(
             raise Exception(error_description)
 
         return BytesIO(response.data)
+
+    except Exception as e:
+        raise Exception(f"Invalid Site: {str(e)}")
+
+
+def write_file(
+    drive_id: str, token: str, file_content: BytesIO, file_name: str, base_path: str
+) -> dict:
+    """
+    Write file to a location.
+    """
+    if base_path is not None and not base_path.startswith("/"):
+        raise Exception("Base path must always begin with a slash /")
+
+    path = (base_path or "") + "/" + file_name
+
+    path = f":{path}:"
+    url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root{path}/content"
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
+    try:
+        response = http.request(
+            "PUT",
+            url,
+            headers=headers,
+            body=file_content,
+            # retries=False,  # Disable automatic retries
+        )
+
+        if response.status != 201:
+            response_data = json.loads(response.data.decode("utf-8"))
+            error_description = response_data["error"]["message"]
+            raise Exception(error_description)
+
+        return response.json()
 
     except Exception as e:
         raise Exception(f"Invalid Site: {str(e)}")
