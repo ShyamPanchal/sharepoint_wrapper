@@ -238,12 +238,13 @@ def write_file(
             # retries=False,  # Disable automatic retries
         )
 
+        response_data = json.loads(response.data.decode("utf-8"))
+
         if response.status not in (201, 200):
-            response_data = json.loads(response.data.decode("utf-8"))
             error_description = response_data["error"]["message"]
             raise Exception(error_description)
 
-        return response.json()
+        return response_data
 
     except Exception as e:
         print(traceback.format_exc())
