@@ -108,7 +108,7 @@ def get_files(
         client.get_files(
             path="/Documents",
             filter_params={
-                "name": startswith("name", "Report"),
+                "name": "startswith(name, 'Report')",
             }
         )
 
