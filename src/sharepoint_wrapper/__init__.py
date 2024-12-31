@@ -60,8 +60,76 @@ def get_folders(config: SharePointConfig, path: str | None = None):
     return get_children(config.drive, config.token, path, "folder")
 
 
-def get_files(config: SharePointConfig, path: str | None = None):
-    return get_children(config.drive, config.token, path, "file")
+def get_files(
+    config: SharePointConfig,
+    path: str | None = None,
+    filter_params: dict | None = None,
+    sort_params: list | None = None,
+    detailed_response: bool | None = False,
+):
+    """
+    Get files from SharePoint with advanced filtering options using Microsoft Graph API.
+
+    Args:
+        path: The folder path to get files from
+        filter_params: Dictionary of OData filter expressions. Supported functions and operators:
+            Comparison Operators:
+                eq: Equal to
+                ne: Not equal to
+                gt: Greater than
+                ge: Greater than or equal to
+                lt: Less than
+                le: Less than or equal to
+            Logical Operators:
+                and: Logical AND
+                or: Logical OR
+                not: Logical NOT
+            String Functions:
+                startswith(property, 'value'): Check if string starts with value
+                endswith(property, 'value'): Check if string ends with value
+
+            Supported Properties:
+                name: File name
+                webUrl: SharePoint URL
+
+        sort_params: List of sort expressions. Format: ['property direction']
+            Supported Properties:
+                name: File name
+                webUrl: SharePoint URL
+                lastModifiedDateTime: last modified date time
+            Directions:
+                asc: Ascending order
+                desc: Descending order
+
+        detailed_response: Boolean flag to indicate if a detailed response is required. Defaults to False.
+
+    Examples:
+        # Filter by file name starting with "Report"
+        client.get_files(
+            path="/Documents",
+            filter_params={
+                "name": startswith("name", "Report"),
+            }
+        )
+
+        # sort by modified date
+        client.get_files(
+            path="/Documents",
+            sort_params=["lastModifiedDateTime desc"]
+        )
+
+    Returns:
+        List of file items matching the specified criteria
+    """
+    return get_children(
+        config.drive,
+        config.token,
+        path,
+        "file",
+        filter_params,
+        sort_params,
+        detailed_response,
+    )
 
 
 def get_file_content(config: SharePointConfig, file_name: str, path: str | None = None):

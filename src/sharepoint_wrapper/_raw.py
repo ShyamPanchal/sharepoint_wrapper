@@ -3,6 +3,7 @@ from datetime import datetime
 from functools import wraps
 from io import BytesIO
 import traceback
+from urllib.parse import quote
 
 import urllib3
 from urllib import parse
@@ -123,8 +124,34 @@ def get_drives(site_id: str, token: str) -> list[str]:
         raise Exception(f"Invalid Site: {str(e)}")
 
 
+def build_query_string(
+    filter_params: dict | None = None,
+    sort_params: list | None = None,
+) -> str:
+    """
+    Build OData query string for filtering and sorting.
+    """
+    query_parts = []
+
+    if filter_params:
+        filter_conditions = " and ".join(filter_params.values())
+        query_parts.append(f"$filter={quote(filter_conditions)}")
+
+    if sort_params:
+        sort_string = ",".join(sort_params)
+        query_parts.append(f"$orderby={quote(sort_string)}")
+
+    return "&".join(query_parts)
+
+
 def get_children(
-    drive_id, token, base_path: str | None = None, category: str | None = None
+        drive_id,
+        token,
+        base_path: str | None = None,
+        category: str | None = None,
+        filter_params: dict | None = None,
+        sort_params: list | None = None,
+        detailed_response: bool | None = False,
 ):
     """
     Get Children.
@@ -133,10 +160,18 @@ def get_children(
     if base_path is not None and not base_path.startswith("/"):
         raise Exception("Base path must always begin with a slash /")
     base_path = "" if base_path is None else f":{base_path}:"
-    url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root{base_path}/children"
+    base_url = (
+        f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root{base_path}/children"
+    )
+    query_string = build_query_string(
+        filter_params, sort_params
+    )
+    url = f"{base_url}?{query_string}" if query_string else base_url
+
     headers = {
         "Accept": "application/json",
         "Authorization": f"Bearer {token}",
+        "ConsistencyLevel": "eventual",
     }
 
     try:
@@ -153,22 +188,68 @@ def get_children(
             raise Exception(error_description)
 
         raw_drives = response_data.get("value", None)
-        drives = []
-        if raw_drives is not None:
-            drives = [
-                (
-                    d.get("name"),
-                    d.get("webUrl"),
-                    "folder" if "folder" in d else "file" if "file" in d else "unknown",
-                )
+        if raw_drives is None:
+            return []
+
+        if not detailed_response:
+            return [
+                {
+                    "name": d.get("name"),
+                    "webUrl": d.get("webUrl"),
+                    "type": "folder" if "folder" in d else "file" if "file" in d else "unknown",
+                }
                 for d in raw_drives
                 if (category is None) or (category is not None and category in d)
             ]
 
-        return drives
+        return [
+            {
+                "name": d.get("name"),
+                "webUrl": d.get("webUrl"),
+                "type": (
+                    "folder"
+                    if "folder" in d
+                    else "file" if "file" in d else "unknown"
+                ),
+                "createdDateTime": d.get("createdDateTime"),
+                "lastModifiedDateTime": d.get("lastModifiedDateTime"),
+                "createdBy": {
+                    "email": keys_exists(d, "createdBy", "user", "email"),
+                    "displayName": keys_exists(
+                        d, "createdBy", "user", "displayName"
+                    ),
+                },
+                "lastModifiedBy": {
+                    "email": keys_exists(d, "lastModifiedBy", "user", "email"),
+                    "displayName": keys_exists(
+                        d, "lastModifiedBy", "user", "displayName"
+                    ),
+                },
+            }
+            for d in raw_drives
+            if (category is None) or (category is not None and category in d)
+        ]
 
     except Exception as e:
         raise Exception(f"Invalid Site: {str(e)}")
+
+
+def keys_exists(element, *keys):
+    """
+    Check if *keys (nested) exists in `element` (dict).
+    """
+    if not isinstance(element, dict):
+        raise AttributeError("keys_exists() expects dict as first argument.")
+    if len(keys) == 0:
+        raise AttributeError("keys_exists() expects at least two arguments, one given.")
+
+    _element = element
+    for key in keys:
+        try:
+            _element = _element[key]
+        except KeyError:
+            return None
+    return _element
 
 
 def get_file(
