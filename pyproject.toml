@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sharepoint_wrapper"
-version = "0.0.2.20241108.1"
+version = "0.0.3"
 authors = [
   { name="Shyam Panchal", email="shyampanchal95@gmail.com" },
 ]

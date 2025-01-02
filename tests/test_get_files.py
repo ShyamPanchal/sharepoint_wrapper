@@ -3,12 +3,12 @@ from unittest.mock import patch, MagicMock
 import pytest
 from sharepoint_wrapper import get_files
 
-from tests.env import config
+from tests.env import SHAREPOINT_CONFIG, SHAREPOINT_PATH
 
 
 @pytest.fixture
 def mock_config():
-    return config.SHAREPOINT_CONFIG
+    return SHAREPOINT_CONFIG
 
 
 @patch("sharepoint_wrapper._raw.http.request")
@@ -39,8 +39,8 @@ def test_get_files_with_detailed_response(mock_request, mock_config):
     # Make the actual call
     result = get_files(
         config=mock_config,  # Use the fixture
-        path=config.SHAREPOINT_PATH,
-        filter_params={"name": "startswith(name,'Budgets')"},
+        path=SHAREPOINT_PATH,
+        filter_params=["startswith(name,'Budgets')"],
         detailed_response=True,
     )
 
@@ -85,8 +85,8 @@ def test_get_files_without_detailed_response(mock_request, mock_config):
 
     result = get_files(
         config=mock_config,
-        path=config.SHAREPOINT_PATH,
-        filter_params={"name": "startswith(name,'Budgets')"},
+        path=SHAREPOINT_PATH,
+        filter_params=["startswith(name,'Budgets')"],
         detailed_response=False,
     )
 
@@ -139,7 +139,7 @@ def test_get_files_with_sorting(mock_request, mock_config):
     mock_request.return_value = mock_response
 
     result = get_files(
-        config=mock_config, path=config.SHAREPOINT_PATH, sort_params=["name asc"]
+        config=mock_config, path=SHAREPOINT_PATH, sort_params=["name asc"]
     )
 
     assert len(result) == 5
@@ -182,8 +182,8 @@ def test_get_files_with_combined_filters(mock_request, mock_config):
 
     result = get_files(
         config=mock_config,
-        path=config.SHAREPOINT_PATH,
-        filter_params={"name": "startswith(name,'DGR')"},
+        path=SHAREPOINT_PATH,
+        filter_params=["startswith(name,'DGR')"],
         sort_params=["lastModifiedDateTime desc"],
     )
 

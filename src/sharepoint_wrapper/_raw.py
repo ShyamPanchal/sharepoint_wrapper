@@ -134,7 +134,7 @@ def build_query_string(
     query_parts = []
 
     if filter_params:
-        filter_conditions = " and ".join(filter_params.values())
+        filter_conditions = " and ".join(filter_params)
         query_parts.append(f"$filter={quote(filter_conditions)}")
 
     if sort_params:
@@ -145,13 +145,13 @@ def build_query_string(
 
 
 def get_children(
-        drive_id,
-        token,
-        base_path: str | None = None,
-        category: str | None = None,
-        filter_params: dict | None = None,
-        sort_params: list | None = None,
-        detailed_response: bool | None = False,
+    drive_id,
+    token,
+    base_path: str | None = None,
+    category: str | None = None,
+    filter_params: list | None = None,
+    sort_params: list | None = None,
+    detailed_response: bool | None = False,
 ):
     """
     Get Children.
@@ -163,9 +163,7 @@ def get_children(
     base_url = (
         f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root{base_path}/children"
     )
-    query_string = build_query_string(
-        filter_params, sort_params
-    )
+    query_string = build_query_string(filter_params, sort_params)
     url = f"{base_url}?{query_string}" if query_string else base_url
 
     headers = {
@@ -196,7 +194,11 @@ def get_children(
                 {
                     "name": d.get("name"),
                     "webUrl": d.get("webUrl"),
-                    "type": "folder" if "folder" in d else "file" if "file" in d else "unknown",
+                    "type": (
+                        "folder"
+                        if "folder" in d
+                        else "file" if "file" in d else "unknown"
+                    ),
                 }
                 for d in raw_drives
                 if (category is None) or (category is not None and category in d)
@@ -207,17 +209,13 @@ def get_children(
                 "name": d.get("name"),
                 "webUrl": d.get("webUrl"),
                 "type": (
-                    "folder"
-                    if "folder" in d
-                    else "file" if "file" in d else "unknown"
+                    "folder" if "folder" in d else "file" if "file" in d else "unknown"
                 ),
                 "createdDateTime": d.get("createdDateTime"),
                 "lastModifiedDateTime": d.get("lastModifiedDateTime"),
                 "createdBy": {
                     "email": keys_exists(d, "createdBy", "user", "email"),
-                    "displayName": keys_exists(
-                        d, "createdBy", "user", "displayName"
-                    ),
+                    "displayName": keys_exists(d, "createdBy", "user", "displayName"),
                 },
                 "lastModifiedBy": {
                     "email": keys_exists(d, "lastModifiedBy", "user", "email"),
